@@ -4,7 +4,7 @@ from PIL import Image, ImageEnhance, ImageOps
 import argparse
 
 class ImageBatchProcessor:
-    """基础图片批量处理器：支持缩放、灰度化、增强、格式转换、方向校正、去阴影"""
+    """基础图片批量处理器：支持缩放、灰度化、增强、格式转换、去阴影"""
     def __init__(self, input_dir, output_dir, process_type=None):
         self.input_dir = input_dir
         self.process_type = process_type
@@ -47,43 +47,16 @@ class ImageBatchProcessor:
             target_format = kwargs.get("target_format", "jpg")
             original_ext = ext.lstrip(".")
             return f"{name}_convert_{original_ext}.{target_format}"
-        elif process_type == "fix-orientation":
-            return f"{name}_fixorient{ext}"
         elif process_type == "remove-shadow":
             return f"{name}_removeshadow{ext}"
         else:
             return f"{name}_{process_type}{ext}"
 
-    def _apply_exif_orientation(self, img):
-        """根据EXIF信息校正图片方向"""
-        try:
-            exif = img.getexif()
-            if exif:
-                orientation = exif.get(0x0112)
-                if orientation == 2:
-                    img = img.transpose(Image.FLIP_LEFT_RIGHT)
-                elif orientation == 3:
-                    img = img.rotate(180, expand=True)
-                elif orientation == 4:
-                    img = img.rotate(180, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
-                elif orientation == 5:
-                    img = img.rotate(-90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
-                elif orientation == 6:
-                    img = img.rotate(-90, expand=True)
-                elif orientation == 7:
-                    img = img.rotate(90, expand=True).transpose(Image.FLIP_LEFT_RIGHT)
-                elif orientation == 8:
-                    img = img.rotate(90, expand=True)
-        except Exception:
-            pass
-        return img
 
     def resize_image(self, img_path, target_width=None, target_height=None, scale=None):
         """缩放图片"""
         try:
             img = Image.open(img_path)
-            # 先校正方向
-            img = self._apply_exif_orientation(img)
             
             original_width, original_height = img.size
             
@@ -121,8 +94,6 @@ class ImageBatchProcessor:
         """灰度化处理"""
         try:
             img = Image.open(img_path)
-            # 先校正方向
-            img = self._apply_exif_orientation(img)
             
             gray_img = img.convert("L")
             width, height = img.size
@@ -140,8 +111,6 @@ class ImageBatchProcessor:
                 raise ValueError(f"亮度/对比度值必须在0.1-5.0范围内（当前：亮度={brightness}, 对比度={contrast}）")
             
             img = Image.open(img_path)
-            # 先校正方向
-            img = self._apply_exif_orientation(img)
             
             # 转换为RGB模式以支持所有图像处理
             if img.mode not in ("RGB", "RGBA"):
@@ -166,8 +135,6 @@ class ImageBatchProcessor:
         """图片格式转换"""
         try:
             img = Image.open(img_path)
-            # 先校正方向
-            img = self._apply_exif_orientation(img)
             
             # PNG转JPG需要处理透明通道
             if target_format.lower() in ["jpg", "jpeg"]:
@@ -189,23 +156,10 @@ class ImageBatchProcessor:
             self.stats["failed"].append(f"{img_path} - 格式转换失败：{str(e)}")
             return None
 
-    def fix_orientation(self, img_path):
-        """根据EXIF信息自动校正图片方向"""
-        try:
-            img = Image.open(img_path)
-            # 应用方向校正
-            corrected_img = self._apply_exif_orientation(img)
-            return corrected_img
-        except Exception as e:
-            self.stats["failed"].append(f"{img_path} - 方向校正失败：{str(e)}")
-            return None
-
     def remove_shadow(self, img_path):
         """阴影去除与亮度均匀化（使用Pillow简单实现）"""
         try:
             img = Image.open(img_path)
-            # 先校正方向
-            img = self._apply_exif_orientation(img)
             
             # 转换为RGB模式
             if img.mode != "RGB":
@@ -270,10 +224,6 @@ class ImageBatchProcessor:
                     # 修改扩展名
                     name, _ = os.path.splitext(new_filename)
                     new_filename = f"{name}.{target_format.lower()}"
-            elif process_type == "fix-orientation":
-                processed_img = self.fix_orientation(img_path)
-                if processed_img:
-                    new_filename = self._get_processed_filename(filename, process_type)
             elif process_type == "remove-shadow":
                 processed_img = self.remove_shadow(img_path)
                 if processed_img:
@@ -301,30 +251,3 @@ class ImageBatchProcessor:
             print("失败详情：")
             for err in self.stats["failed"]:
                 print(f"  - {err}")
-
-if __name__ == "__main__":
-    # 命令行参数解析
-    parser = argparse.ArgumentParser(description="基础图片批量处理工具")
-    parser.add_argument("--input", "-i", required=True, help="输入目录路径")
-    parser.add_argument("--output", "-o", default="", help="输出目录路径（未指定则自动生成）")
-    parser.add_argument("--type", "-t", required=True, choices=["resize", "grayscale", "enhance", "convert", "fix-orientation", "remove-shadow"], help="处理类型")
-    parser.add_argument("--width", "-w", type=int, default=800, help="缩放目标宽度（仅resize生效）")
-    parser.add_argument("--height", "-H", type=int, default=600, help="缩放目标高度（仅resize生效）")
-    parser.add_argument("--scale", "-s", type=float, default=None, help="缩放比例（优先级高于width/height，仅resize生效）")
-    parser.add_argument("--brightness", "-b", type=float, default=1.0, help="亮度值（仅enhance生效，范围0.1-5.0）")
-    parser.add_argument("--contrast", "-c", type=float, default=1.0, help="对比度值（仅enhance生效，范围0.1-5.0）")
-    parser.add_argument("--target-format", "-f", type=str, default="jpg", choices=["jpg", "png"], help="目标格式（仅convert生效）")
-    
-    args = parser.parse_args()
-    
-    # 初始化并执行处理
-    processor = ImageBatchProcessor(args.input, args.output, process_type=args.type)
-    processor.process(
-        process_type=args.type,
-        resize_w=args.width,
-        resize_h=args.height,
-        scale=args.scale,
-        brightness=args.brightness,
-        contrast=args.contrast,
-        target_format=args.target_format
-    )
