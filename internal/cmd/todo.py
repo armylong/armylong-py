@@ -1,16 +1,15 @@
-def todo_handler(**kwargs):
-    """todo命令核心逻辑：仅读取参数 + 处理业务"""
-    # 方式1：通过kwargs直接获取参数（更简洁）
-    task_type = kwargs.get('task_type')
-    task_id = kwargs.get('task_id')
-    title = kwargs.get('title')
-    desc = kwargs.get('desc')
-    sort = kwargs.get('sort')
-    expire_at = kwargs.get('expire_at')
+import click
 
-    # 方式2：也可以通过ctx获取（和之前一致）
-    # params = ctx.params
-    # task_type = params['task_type']
+# 定义todo子命令（对应Go的todoCmd）
+@click.command(name='todo')
+@click.argument('task_type')  # 必选参数：任务类型（get/create/sort等）
+@click.option('--task_id', '-id', type=int, default=0, help='任务ID（可选）')
+@click.option('--title', '-t', type=str, default='', help='任务标题（create时必填）')
+@click.option('--desc', '-d', type=str, default='', help='任务描述（create时必填）')
+@click.option('--sort', '-s', type=int, default=0, help='任务排序值，数字越大越靠前（可选）')
+@click.option('--expire_at', '-e', type=str, default='', help='过期时间，格式：2026-03-23 20:00:00（可选）')
+def todo_handler(task_type, task_id, title, desc, sort, expire_at):
+    """todo命令核心逻辑：仅读取参数 + 处理业务"""
 
     # 纯业务逻辑（无任何click相关代码）
     if task_type == 'get':
