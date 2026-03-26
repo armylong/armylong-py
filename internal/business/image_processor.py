@@ -49,6 +49,8 @@ class ImageBatchProcessor:
             return f"{name}_convert_{original_ext}.{target_format}"
         elif process_type == "remove-shadow":
             return f"{name}_removeshadow{ext}"
+        elif process_type == "fix-orientation":
+            return f"{name}_fixorientation{ext}"
         else:
             return f"{name}_{process_type}{ext}"
 
@@ -226,6 +228,10 @@ class ImageBatchProcessor:
                     new_filename = f"{name}.{target_format.lower()}"
             elif process_type == "remove-shadow":
                 processed_img = self.remove_shadow(img_path)
+                if processed_img:
+                    new_filename = self._get_processed_filename(filename, process_type)
+            elif process_type == "fix-orientation":
+                processed_img = Image.open(img_path)
                 if processed_img:
                     new_filename = self._get_processed_filename(filename, process_type)
             else:
