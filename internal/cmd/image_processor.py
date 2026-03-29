@@ -1,5 +1,5 @@
 import click
-from internal.business.image_processor import ImageBatchProcessor
+from internal.business.image_processor.image_processor import ImageBatchProcessor
 
 @click.command(name='image_processor')
 @click.option('--input', '-i', type=str, default='', help='输入目录路径')
