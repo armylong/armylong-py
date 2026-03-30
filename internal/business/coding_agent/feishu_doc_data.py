@@ -3,12 +3,12 @@ import json
 
 class FeishuDocData:
 
-    table_data = []
+    table_rows = []
 
     def __init__(self):
-        self.table_data = self.get_doc_table()
+        self.table_rows = self.get_doc_table_rows()
     
-    def get_doc_table(self):
+    def get_doc_table_rows(self):
         """获取飞书文档详情数据"""
 
         url = "http://0.0.0.0/feishu/getBaseTables"
@@ -19,12 +19,10 @@ class FeishuDocData:
         }
 
         response = requests.post(url, json=params).json()
-        # print(response.keys())
         if response.get("errorCode", -1) != 0:
             raise Exception(response.get("errorMsg", "获取飞书文档详情数据失败 go服务报错"))
 
         doc_response = response.get("responseData", {})
-        # print(doc_response.keys())
         if doc_response.get("code", -1) != 0:
             raise Exception(doc_response.get("msg", "获取飞书文档详情数据失败 飞书接口报错"))
 
@@ -45,19 +43,25 @@ class FeishuDocData:
         
         return items
 
-    def get_doc_instance_id_list(self):
-        """获取飞书文档所有没做的题目"""
-        print(self.table_data[0])
-        instance_list = [item["instance_id"] for item in self.table_data]
-        return instance_list
+    # def get_doc_row_id_list(self):
+    #     """获取飞书文档所有行ID"""
+    #     # print(self.table_data[0])
+    #     row_id_list = [item["id"] for item in self.table_data]
+    #     # 按顺序去重
+    #     res = []
+    #     for row_id in row_id_list:
+    #         if row_id not in res:
+    #             res.append(row_id)
+        
+    #     return res
 
 
-    def get_doc_instance(self, instance_id: str):
-        """获取飞书文档实例详情"""
-        instance = next((item for item in self.table_data if item["instance_id"] == instance_id), None)
-        if instance is None:
-            raise Exception(f"飞书文档实例 {instance_id} 不存在")
-        return instance
+    # def get_doc_rows(self, row_id: str):
+    #     """获取飞书文档行详情"""
+    #     row = next((item for item in self.table_data if item["id"] == row_id), None)
+    #     if row is None:
+    #         raise Exception(f"飞书文档行 {row_id} 不存在")
+    #     return row
 
     def getValue(self, value_any: any):
 
@@ -81,12 +85,10 @@ class FeishuDocData:
                     else:
                         raise Exception(f"字段是对象, 但是type为空: {value_item}")
                 elif _type != "text":
-                    print(value_any)
                     raise Exception(f"不识别的字段type类型: {value_item}")
             return res
         else:
             raise Exception(f"无法拆解的字段值: {value_any}")
-
         
     def _fix_duplicate_keys(self, json_str: str) -> str:
         import re
@@ -206,5 +208,10 @@ class FeishuDocData:
 if __name__ == "__main__":
     feishu_doc_data = FeishuDocData()
     # feishu_doc_data.get_doc_table()
-    instance_list = feishu_doc_data.get_doc_instance_id_list()
-    print(instance_list)
+    # row_id_list = feishu_doc_data.get_doc_row_id_list()
+    # print(row_id_list)
+
+    # for row_id in row_id_list:
+    #     row = feishu_doc_data.get_doc_row(row_id)
+    #     print(row)
+        
