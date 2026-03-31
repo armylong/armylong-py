@@ -33,9 +33,12 @@ class SaveWorks:
         with open(f"{self.works_dir}/{row_id}/prompt.md", "w", encoding="utf-8") as f:
             f.write(prompt_str)
         
-        
+    # 将飞书文档中未完成的任务, 写入到本地目录中(------已经写入过的直接跳过------)
     def main(self, record_ids=[]):
         # 循环查找飞书文档中未完成的任务
+        if len(self.feishu_doc.table_records) == 0:
+            print("- 飞书上没有未完成的任务了")
+        
         for record in self.feishu_doc.table_records:
             record_id = record.get("record_id", "")
             if not record_id or not record_id.strip():
@@ -45,7 +48,7 @@ class SaveWorks:
             row = record.get("record_data", {})
             if not row:
                 raise Exception(f"飞书文档行 {record} 缺少 fields 字段")
-            row_id = row.get("id", "")
+            row_id = row.get(self.feishu_doc.row_id_key, "")
             if not row_id or not row_id.strip():
                 raise Exception(f"飞书文档行 {row_id} 缺少ID")
             
@@ -59,10 +62,13 @@ class SaveWorks:
                 continue
             
             print(f"检测到未完成的题目, 开始写入工作目录: {row_id}:{model_name}")
-            # 创建id工作目录(如果存在, 则不创建)
+            # 创建id工作目录(如果存在, 则跳过不重复建)
             row_dir = f"{self.works_dir}/{row_id}"
             if not os.path.exists(row_dir):
                 os.makedirs(row_dir)
+            else:
+                print(f"- 目录 {row_dir} 已存在, 跳过")
+                continue
             # 保存提示词
             self.save_prompt_md(row_id, model_name, row.get(self.feishu_doc.prompt_key, ""))
             # 保存json

@@ -111,6 +111,9 @@ class UpFeishuDoc:
     # 将任务结果数据回写至飞书多为表格
     def main(self, record_ids=[]):
         # 循环查找飞书文档中未完成的任务
+        if len(self.feishu_doc.table_records) == 0:
+            print("- 飞书上没有未完成的任务了")
+
         for record in self.feishu_doc.table_records:
             record_id = record.get("record_id", "")
             if not record_id or not record_id.strip():
@@ -120,7 +123,7 @@ class UpFeishuDoc:
             row = record.get("record_data", {})
             if not row:
                 raise Exception(f"飞书文档行 {record} 缺少 fields 字段")
-            row_id = row.get("id", "")
+            row_id = row.get(self.feishu_doc.row_id_key, "")
             if not row_id or not row_id.strip():
                 raise Exception(f"飞书文档行 {row_id} 缺少ID")
             
@@ -129,15 +132,15 @@ class UpFeishuDoc:
                 raise Exception(f"飞书文档行 {row_id} 缺少大模型名称")
 
             # 已完成的数据就忽略了
-            if self.feishu_doc.row_is_complete(row) and datetime.now().strftime("%Y%m%d") != "20260231":
-                print(f"已完成, 跳过: {record_id}{row_id}:{model_name}")
+            if self.feishu_doc.row_is_complete(row):
+                print(f"已完成, 跳过: {record_id}:{row_id}:{model_name}")
                 continue
             
-            print(f"检测到未完成的题目, 开始将数据写入到飞书多维表格中: {record_id}{row_id}:{model_name}")
+            print(f"检测到未完成的题目, 开始将数据写入到飞书多维表格中: {record_id}:{row_id}:{model_name}")
             # 查找对应目录判断题目是否已完成
             qa_result = self.instance_is_complete(row_id)
             if not qa_result:
-                print(f"题目 {record_id}{row_id} 未完成, 跳过")
+                print(f"题目 {record_id}:{row_id}:{model_name} 没检测到qa_result.json文件, 跳过")
                 continue
 
             # 因为qa_result.json是多个模型的处理结果(一个模型代表一行, 本次就只处理当前模型的数据)

@@ -6,19 +6,25 @@ class FeishuDocData:
     table_records = []
     complete_key = "是否评测完成"
     complete_value = "是"
+    not_complete_value = "否"
     json_key = "json"
     prompt_key = "instructions"
     model_name_key = "framework"
     not_full_score_reason_key = "非满分备注"
     constraints_content_people_key = "constraints_{}_content_人工"
+    row_id_key = "id"
 
     def __init__(self):
         self.table_records = self.get_doc_table_records()
 
     def row_is_complete(self, row: dict):
         """是否是已完成的行数据"""
+        row_id = row.get(self.row_id_key, "")
+        if not row_id or not row_id.strip():
+            raise Exception(f"飞书文档行 {row} 缺少ID")
         if self.complete_key not in row:
-            raise Exception(f"飞书文档行 {row_id} 缺少 {self.complete_key} 列")
+            # 没填写是否完成的, 连这个key也没有, 是正常的
+            return False
         
         return row.get(self.complete_key, "") == self.complete_value
     
@@ -30,6 +36,14 @@ class FeishuDocData:
         params = {
             "app_token": "ZFszben8BaPhvPscIbLcmKsZnYB",
             "table_id": "tbluYT98DikJIQp1",
+            "search_base_tables_url_request_json": {
+                "filter": {
+                    "conjunction": "and",
+                    "conditions": [
+                        {"field_name": self.complete_key, "operator": "isNot", "value": [self.complete_value]}
+                    ]
+                }
+            }
         }
 
         response = requests.post(url, json=params).json()

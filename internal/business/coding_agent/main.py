@@ -30,13 +30,15 @@ class Main:
         self.save_works()
 
         # 调用ai完成任务
-        print("\n调用ai完成任务")
+        print("\n调用ai完成任务, 生成qa_result.json")
         self.call_ai()
 
         # 将任务结果数据回写至飞书多为表格
-        print("\n将任务结果数据回写至飞书多维表格")
-        self.update_feishu_doc()
+        print("\n将ai处理完的本地数据结果(qa_result.json), 回写至飞书多维表格")
+        self.update_feishu_doc()  # 实时监控qa_result.done文件, 同时结合云端是否完成标记, 只处理未完成的题目
         
+
+        ## 可以加个只拉取未完成的题目的筛选项
 
 if __name__ == "__main__":
     main = Main()
