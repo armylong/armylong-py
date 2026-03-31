@@ -3,15 +3,15 @@ import json
 
 class FeishuDocData:
 
-    table_rows = []
+    table_records = []
 
     def __init__(self):
-        self.table_rows = self.get_doc_table_rows()
+        self.table_records = self.get_doc_table_records()
     
-    def get_doc_table_rows(self):
+    def get_doc_table_records(self):
         """获取飞书文档详情数据"""
 
-        url = "http://0.0.0.0/feishu/getBaseTables"
+        url = "http://0.0.0.0/feishu/searchBaseTables"
 
         params = {
             "app_token": "ZFszben8BaPhvPscIbLcmKsZnYB",
@@ -28,40 +28,23 @@ class FeishuDocData:
 
         items = doc_response.get("data", {}).get("items", [])
         for i, item in enumerate(items):
-            item = item.get("fields", {})
-            if len(item) == 0:
+            record_id = item.get("record_id", "")
+            if record_id == "":
+                raise Exception(f"表格里一行数据 {item} 缺少 record_id 字段")
+            record_data = item.get("fields", {})
+            if len(record_data) == 0:
                 raise Exception(f"表格里一行数据都为空: {item}")
 
-            for k, v in item.items():
+            for k, v in record_data.items():
                 # if k == "instance_id":
                 value = self.getValue(v)
                 if k == "json":
                     value = self.format_json(value)
-                item[k] = value
+                record_data[k] = value
 
-            items[i] = item
+            items[i] = {"record_id": record_id, "record_data": record_data}
         
         return items
-
-    # def get_doc_row_id_list(self):
-    #     """获取飞书文档所有行ID"""
-    #     # print(self.table_data[0])
-    #     row_id_list = [item["id"] for item in self.table_data]
-    #     # 按顺序去重
-    #     res = []
-    #     for row_id in row_id_list:
-    #         if row_id not in res:
-    #             res.append(row_id)
-        
-    #     return res
-
-
-    # def get_doc_rows(self, row_id: str):
-    #     """获取飞书文档行详情"""
-    #     row = next((item for item in self.table_data if item["id"] == row_id), None)
-    #     if row is None:
-    #         raise Exception(f"飞书文档行 {row_id} 不存在")
-    #     return row
 
     def getValue(self, value_any: any):
 
@@ -207,11 +190,4 @@ class FeishuDocData:
 
 if __name__ == "__main__":
     feishu_doc_data = FeishuDocData()
-    # feishu_doc_data.get_doc_table()
-    # row_id_list = feishu_doc_data.get_doc_row_id_list()
-    # print(row_id_list)
-
-    # for row_id in row_id_list:
-    #     row = feishu_doc_data.get_doc_row(row_id)
-    #     print(row)
         

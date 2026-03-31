@@ -48,8 +48,11 @@ class SaveWorks:
         
        
     def main(self):
-        table_rows = self.feishu_doc.get_doc_table_rows()
-        for row in table_rows:
+        table_records = self.feishu_doc.table_records
+        for record in table_records:
+            row = record.get("record_data", {})
+            if not row:
+                raise Exception(f"飞书文档行 {record} 缺少 fields 字段")
             row_id = row.get("id", "")
             if not row_id or not row_id.strip():
                 raise Exception(f"飞书文档行 {row_id} 缺少ID")
