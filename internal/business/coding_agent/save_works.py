@@ -7,11 +7,6 @@ class SaveWorks:
     
     works_dir = ""
     feishu_doc = None
-    complete_key = "是否评测完成"
-    complete_value = "是"
-    json_key = "json"
-    prompt_key = "instructions"
-    model_name_key = "framework"
 
     def __init__(self, works_dir: str):
         if not works_dir or not works_dir.strip():
@@ -25,7 +20,7 @@ class SaveWorks:
 
     def save_json(self, row_id: str, model_name: str, json_data: dict):
         if not json_data:
-            raise Exception(f"飞书文档行 {row_id} 缺少 {self.json_key} 列")
+            raise Exception(f"飞书文档行 {row_id} 缺少 {self.feishu_doc.json_key} 列")
         json_str = json.dumps(json_data, ensure_ascii=False, indent=4)
         if not json_str or not json_str.strip():
             raise Exception(f"飞书文档行 {row_id} json数据异常 为空")
@@ -38,18 +33,13 @@ class SaveWorks:
         with open(f"{self.works_dir}/{row_id}/prompt.md", "w", encoding="utf-8") as f:
             f.write(prompt_str)
         
-
-    def row_is_complete(self, row: dict):
-        """是否是已完成的行数据"""
-        if self.complete_key not in row:
-            raise Exception(f"飞书文档行 {row_id} 缺少 {self.complete_key} 列")
-        
-        return row.get(self.complete_key, "") == self.complete_value
         
        
     def main(self):
-        table_records = self.feishu_doc.table_records
-        for record in table_records:
+        for record in self.feishu_doc.table_records:
+            record_id = record.get("record_id", "")
+            if not record_id or not record_id.strip():
+                raise Exception(f"飞书文档行 {record} 缺少 record_id 字段")
             row = record.get("record_data", {})
             if not row:
                 raise Exception(f"飞书文档行 {record} 缺少 fields 字段")
@@ -57,12 +47,12 @@ class SaveWorks:
             if not row_id or not row_id.strip():
                 raise Exception(f"飞书文档行 {row_id} 缺少ID")
             
-            model_name = row.get(self.model_name_key, "")
+            model_name = row.get(self.feishu_doc.model_name_key, "")
             if not model_name or not model_name.strip():
                 raise Exception(f"飞书文档行 {row_id} 缺少大模型名称")
 
             # 已完成的数据就忽略了
-            if self.row_is_complete(row):
+            if self.feishu_doc.row_is_complete(row):
                 print(f"已完成, 跳过: {row_id}:{model_name}")
                 continue
             
@@ -72,9 +62,9 @@ class SaveWorks:
             if not os.path.exists(row_dir):
                 os.makedirs(row_dir)
             # 保存提示词
-            self.save_prompt_md(row_id, model_name, row.get(self.prompt_key, ""))
+            self.save_prompt_md(row_id, model_name, row.get(self.feishu_doc.prompt_key, ""))
             # 保存json
-            self.save_json(row_id, model_name, row.get(self.json_key, {}))
+            self.save_json(row_id, model_name, row.get(self.feishu_doc.json_key, {}))
 
             
             

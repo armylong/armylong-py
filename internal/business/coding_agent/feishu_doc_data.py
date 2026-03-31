@@ -4,9 +4,21 @@ import json
 class FeishuDocData:
 
     table_records = []
+    complete_key = "是否评测完成"
+    complete_value = "是"
+    json_key = "json"
+    prompt_key = "instructions"
+    model_name_key = "framework"
 
     def __init__(self):
         self.table_records = self.get_doc_table_records()
+
+    def row_is_complete(self, row: dict):
+        """是否是已完成的行数据"""
+        if self.complete_key not in row:
+            raise Exception(f"飞书文档行 {row_id} 缺少 {self.complete_key} 列")
+        
+        return row.get(self.complete_key, "") == self.complete_value
     
     def get_doc_table_records(self):
         """获取飞书文档详情数据"""

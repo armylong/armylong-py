@@ -29,7 +29,7 @@ class Main:
         self.call_ai()
 
         # 将任务结果数据回写至飞书多为表格
-        # self.update_feishu_doc()
+        self.update_feishu_doc()
         
 
 if __name__ == "__main__":
