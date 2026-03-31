@@ -129,7 +129,7 @@ class UpFeishuDoc:
                 raise Exception(f"飞书文档行 {row_id} 缺少大模型名称")
 
             # 已完成的数据就忽略了
-            if self.feishu_doc.row_is_complete(row) and datetime.now().strftime("%Y%m%d") != "202603312":
+            if self.feishu_doc.row_is_complete(row) and datetime.now().strftime("%Y%m%d") != "20260231":
                 print(f"已完成, 跳过: {record_id}{row_id}:{model_name}")
                 continue
             
