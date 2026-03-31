@@ -9,6 +9,8 @@ class FeishuDocData:
     json_key = "json"
     prompt_key = "instructions"
     model_name_key = "framework"
+    not_full_score_reason_key = "非满分备注"
+    constraints_content_people_key = "constraints_{}_content_人工"
 
     def __init__(self):
         self.table_records = self.get_doc_table_records()

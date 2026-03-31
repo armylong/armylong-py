@@ -34,12 +34,14 @@ class SaveWorks:
             f.write(prompt_str)
         
         
-       
-    def main(self):
+    def main(self, record_ids=[]):
+        # 循环查找飞书文档中未完成的任务
         for record in self.feishu_doc.table_records:
             record_id = record.get("record_id", "")
             if not record_id or not record_id.strip():
                 raise Exception(f"飞书文档行 {record} 缺少 record_id 字段")
+            if len(record_ids) > 0 and record_id not in record_ids:
+                continue
             row = record.get("record_data", {})
             if not row:
                 raise Exception(f"飞书文档行 {record} 缺少 fields 字段")
@@ -53,7 +55,7 @@ class SaveWorks:
 
             # 已完成的数据就忽略了
             if self.feishu_doc.row_is_complete(row):
-                print(f"已完成, 跳过: {row_id}:{model_name}")
+                print(f"已完成, 跳过: {record_id}{row_id}:{model_name}")
                 continue
             
             print(f"检测到未完成的题目, 开始写入工作目录: {row_id}:{model_name}")
@@ -72,4 +74,4 @@ class SaveWorks:
 
 if __name__ == "__main__":
     save_json = SaveWorks("/root/code/stepBYstep/pyCode/armylong-py/internal/business/coding_agent/works")
-    save_json.main()
+    save_json.main(record_ids=["recveSGMtiwwVe"])

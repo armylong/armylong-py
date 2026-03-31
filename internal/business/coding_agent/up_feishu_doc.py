@@ -1,5 +1,7 @@
 import os
 import json
+import requests
+from datetime import datetime
 import feishu_doc_data
 
 class UpFeishuDoc:
@@ -55,37 +57,66 @@ class UpFeishuDoc:
 
         return qa_result
 
-    def update_feishu_doc(self, instance_id: str):
+    def update_feishu_doc(self, record_id: str, row_id: str, model_name: str, model_qa_result: dict):
         ## 获取题目目录下qa_result.md文档数据
         ## 拆分出每个模型数据: 模型名称 | 多个约束的分值 | 不为满分的理由
         ## 调用飞书写入接口写入飞书多维表格
-        qa_result = self.instance_is_complete(instance_id)
-        if not qa_result:
-            print(f"题目 {instance_id} 未完成, 跳过")
-            return
-
+        result = model_qa_result.get("result", "")
+        score_list = model_qa_result.get("score_list", [])
+        if not score_list:
+            raise Exception(f"{row_id}.qa_result.json 文件 {qa_result_json_path} 内容为空")
         
+        feishu_up_map = {
+            self.feishu_doc.complete_key: self.feishu_doc.complete_value,  # 标记已完成
+        }
+        if result != "" or result.strip() != "":
+            feishu_up_map[self.feishu_doc.not_full_score_reason_key] = result
 
-        pass
+            
+        has_not_full_score_yn = False
+        for item in score_list:
+            _constraints_id = item.get("constraints_id", 0)
+            _score = item.get("score", 0)
+            if _constraints_id == 0 or _score == 0 or _score > 3:
+                raise Exception(f"{row_id}.qa_result.json 文件中, {model_name} 约束ID或分值为空或f分值大于3")
+            if _score != 3:
+                has_not_full_score_yn = True
+            constraints_content_people_key = self.feishu_doc.constraints_content_people_key.format(_constraints_id)
+            feishu_up_map[constraints_content_people_key] = str(_score)
+
+        if has_not_full_score_yn and result == "":
+            raise Exception(f"{row_id}.qa_result.json 文件中, {model_name} 不都是满分, 但是没有理由")
+        if not has_not_full_score_yn and result != "":
+            raise Exception(f"{row_id}.qa_result.json 文件中, {model_name} 全是满分, 但是有理由")
+
+        url = "http://0.0.0.0/feishu/updateBaseTables"
+        params = {
+            "app_token": "ZFszben8BaPhvPscIbLcmKsZnYB",
+            "table_id": "tbluYT98DikJIQp1",
+            "record_id": record_id,
+            "update_base_tables_url_request_json": {"fields": feishu_up_map}
+        }
+        print(params)
+
+        response = requests.post(url, json=params).json()
+        if response.get("errorCode", -1) != 0:
+            raise Exception(response.get("errorMsg", "更新飞书文档失败 go服务报错"))
+
+        doc_response = response.get("responseData", {})
+        if doc_response.get("code", -1) != 0:
+            raise Exception(doc_response.get("msg", "更新飞书文档失败 飞书接口报错"))
+
+        print(doc_response)
 
     # 将任务结果数据回写至飞书多为表格
-    def main(self):
-        # 循环处理工作目录下所有已完成的题目
-        # 获取所有子目录
-        instance_ids = [item for item in os.listdir(self.works_dir) if os.path.isdir(os.path.join(self.works_dir, item))]
-
-        # 循环处理每个题目
-        for instance_id in instance_ids:
-            print(f"处理题目 {instance_id}")
-            # self.update_feishu_doc(instance_id)
-
-        # 循环查找飞书未完成的人物
+    def main(self, record_ids=[]):
+        # 循环查找飞书文档中未完成的任务
         for record in self.feishu_doc.table_records:
             record_id = record.get("record_id", "")
-            print(record_id)
-            exit(1)
             if not record_id or not record_id.strip():
                 raise Exception(f"飞书文档行 {record} 缺少 record_id 字段")
+            if len(record_ids) > 0 and record_id not in record_ids:
+                continue
             row = record.get("record_data", {})
             if not row:
                 raise Exception(f"飞书文档行 {record} 缺少 fields 字段")
@@ -98,20 +129,25 @@ class UpFeishuDoc:
                 raise Exception(f"飞书文档行 {row_id} 缺少大模型名称")
 
             # 已完成的数据就忽略了
-            if self.feishu_doc.row_is_complete(row):
-                print(f"已完成, 跳过: {row_id}:{model_name}")
+            if self.feishu_doc.row_is_complete(row) and datetime.now().strftime("%Y%m%d") != "20260331":
+                print(f"已完成, 跳过: {record_id}{row_id}:{model_name}")
                 continue
             
-            print(f"检测到未完成的题目, 开始写入工作目录: {row_id}:{model_name}")
+            print(f"检测到未完成的题目, 开始将数据写入到飞书多维表格中: {record_id}{row_id}:{model_name}")
             # 查找对应目录判断题目是否已完成
             qa_result = self.instance_is_complete(row_id)
             if not qa_result:
-                print(f"题目 {row_id} 未完成, 跳过")
+                print(f"题目 {record_id}{row_id} 未完成, 跳过")
                 continue
 
-            print(qa_result)
+            # 因为qa_result.json是多个模型的处理结果(一个模型代表一行, 本次就只处理当前模型的数据)
+            model_qa_result = qa_result[model_name]
+            if not model_qa_result:
+                raise Exception(f"qa_result.json文件中没有对应模型{model_name}的数据")
+
+            self.update_feishu_doc(record_id, row_id, model_name, model_qa_result)
 
 
 if __name__ == "__main__":
     up_feishu_doc = UpFeishuDoc("/root/code/stepBYstep/pyCode/armylong-py/internal/business/coding_agent/works")
-    up_feishu_doc.main()
+    up_feishu_doc.main(record_ids=["recveSGMtiwwVe"])

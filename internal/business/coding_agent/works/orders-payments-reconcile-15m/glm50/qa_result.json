@@ -18,7 +18,7 @@
                 "score": 3
             }
         ],
-        "result": "约束3:属于简单约束范畴，给2分；与 Terminus2Agent 约束2 存在跨框架重复，核心都是\"确保输出目录存在\"，2个框架重复，ClaudeCode 排名第1，不减分，最终得2分。"
+        "result": "约束3:属于简单约束范畴，给2分；与 Terminus2Agent 约束2 存在跨框架重复，核心都是\"确保输出目录存在\"，2个框架重复，ClaudeCode 排名第1，不减分，最终得2分"
     },
     "CodeActAgent": {
         "score_list": [
