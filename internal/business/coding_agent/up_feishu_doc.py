@@ -82,6 +82,8 @@ class UpFeishuDoc:
         # 循环查找飞书未完成的人物
         for record in self.feishu_doc.table_records:
             record_id = record.get("record_id", "")
+            print(record_id)
+            exit(1)
             if not record_id or not record_id.strip():
                 raise Exception(f"飞书文档行 {record} 缺少 record_id 字段")
             row = record.get("record_data", {})
