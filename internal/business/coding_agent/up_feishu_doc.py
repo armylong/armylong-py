@@ -40,12 +40,12 @@ class UpFeishuDoc:
         # 检查子目录下是否有qa_result.json文件
         qa_result_json_path = os.path.join(result_dir, "qa_result.json")
         if not os.path.exists(qa_result_json_path):
-            return {}
+            raise Exception(f"qa_result.json 文件 {qa_result_json_path} 不存在")
 
         # 检查子目录下是否有qa_result.done文件
         qa_result_done_path = os.path.join(result_dir, "qa_result.done")
         if not os.path.exists(qa_result_done_path):
-            return {}
+            raise Exception(f"qa_result.done 文件 {qa_result_done_path} 不存在")
         
         # 读取qa_result.json文件内容
         qa_result = {}
@@ -145,7 +145,7 @@ class UpFeishuDoc:
             # 查找对应目录判断题目是否已完成
             qa_result = self.instance_is_complete(row_id)
             if not qa_result:
-                logging.warning(f"题目 {record_id}:{row_id}:{model_name} 没检测到qa_result.json文件, 跳过")
+                logging.warning(f"题目 {record_id}:{row_id}:{model_name} qa_result.json文件中没有有效的数据, 跳过")
                 continue
 
             # 因为qa_result.json是多个模型的处理结果(一个模型代表一行, 本次就只处理当前模型的数据)

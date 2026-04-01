@@ -27,12 +27,14 @@ class SaveWorks:
             raise Exception(f"飞书文档行 {row_id} json数据异常 为空")
         with open(f"{self.coding_agent_workspace}/{row_id}/{model_name}.json", "w", encoding="utf-8") as f:
             f.write(json_str)
+        logging.info(f"写入json完成: {row_id} {model_name}.json")
 
     def save_prompt_md(self, row_id: str, model_name: str, prompt_str: str):
         if not prompt_str or not prompt_str.strip():
             raise Exception(f"飞书文档行 {row_id} 提示词数据异常 为空")
         with open(f"{self.coding_agent_workspace}/{row_id}/prompt.md", "w", encoding="utf-8") as f:
             f.write(prompt_str)
+        logging.info(f"写入提示词完成: {row_id} prompt.md")
         
     # 将飞书文档中未完成的任务, 写入到本地目录中(------已经写入过的直接跳过------)
     def main(self, record_ids=[]):
@@ -70,9 +72,10 @@ class SaveWorks:
             # 创建id工作目录(如果存在, 则跳过不重复建)
             row_dir = f"{self.coding_agent_workspace}/{row_id}"
             if not os.path.exists(row_dir):
+                logging.info(f"检测到目录不存在, 创建目录 {row_id}")
                 os.makedirs(row_dir)
             else:
-                logging.debug(f"目录 {row_dir} 已存在, 跳过")
+                logging.info(f"目录已存在, 跳过: {row_dir}")
                 continue
             # 保存提示词
             self.save_prompt_md(row_id, model_name, row.get(self.feishu_doc.prompt_key, ""))

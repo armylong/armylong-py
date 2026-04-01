@@ -81,6 +81,9 @@ class FeishuDocData:
         if isinstance(value_any, str):
             # 如果值是字符串就直接返回
             return value_any
+        elif isinstance(value_any, int):
+            # 如果值是整数, 就直接返回
+            return value_any
         elif isinstance(value_any, list):
             # 如果值是数组套字典, 就循环数组拼接text的值
             for value_item in value_any:
