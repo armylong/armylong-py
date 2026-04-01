@@ -8,7 +8,7 @@ from internal.business.coding_agent.main import Main
 def coding_agent_handler(action, record_ids):   
     """coding_agent命令核心逻辑：仅读取参数 + 处理业务"""
     print()
-    logging.info(f"coding_agent {action} --record_ids: {record_ids}")
+    logging.info(f"coding_agent {action} --record_ids={record_ids}")
     if action == "":
         logging.error("请输入任务类型")
         return
