@@ -2,7 +2,6 @@ import os
 import json
 import logging
 import requests
-from datetime import datetime
 from internal.business.coding_agent import feishu_doc_data
 
 class UpFeishuDoc:
@@ -65,7 +64,7 @@ class UpFeishuDoc:
         result = model_qa_result.get("result", "")
         score_list = model_qa_result.get("score_list", [])
         if not score_list:
-            raise Exception(f"{row_id}.qa_result.json 文件 {qa_result_json_path} 内容为空")
+            raise Exception(f"{row_id}.qa_result.json 文件内容为空")
         
         feishu_up_map = {
             self.feishu_doc.complete_key: self.feishu_doc.complete_value,  # 标记已完成
