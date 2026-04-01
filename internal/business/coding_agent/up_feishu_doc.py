@@ -17,7 +17,7 @@ class UpFeishuDoc:
             raise Exception(f"coding_agent_workspace {coding_agent_workspace} 不存在")
         
         self.coding_agent_workspace = coding_agent_workspace
-        self.feishu_doc = feishu_doc_data.FeishuDocData()
+        self.feishu_doc = feishu_doc_data.FeishuDocData(filter_and=[{"field_name": self.recipient_key, "operator": "is", "value": [self.recipient_myself]}])
 
     def instance_is_complete(self, instance_id: str)->dict:
         """是否是已完成的题目数据"""

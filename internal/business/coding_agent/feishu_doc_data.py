@@ -13,9 +13,11 @@ class FeishuDocData:
     not_full_score_reason_key = "非满分备注"
     constraints_content_people_key = "constraints_{}_content_人工"
     row_id_key = "id"
+    recipient_key = "领取人员"
+    recipient_myself = "ou_8ba15f1ac045cca7d993b572471ca996"
 
-    def __init__(self):
-        self.table_records = self.get_doc_table_records()
+    def __init__(self, filter_and: list = []):
+        self.table_records = self.get_doc_table_records(filter_and)
 
     def row_is_complete(self, row: dict):
         """是否是已完成的行数据"""
@@ -28,7 +30,7 @@ class FeishuDocData:
         
         return row.get(self.complete_key, "") == self.complete_value
     
-    def get_doc_table_records(self):
+    def get_doc_table_records(self, filter_and: list = []):
         """获取飞书文档详情数据"""
 
         url = "http://0.0.0.0/feishu/searchBaseTables"
@@ -45,6 +47,8 @@ class FeishuDocData:
                 }
             }
         }
+        if filter_and:
+            params["search_base_tables_url_request_json"]["filter"]["conditions"].extend(filter_and)
 
         response = requests.post(url, json=params).json()
         if response.get("errorCode", -1) != 0:

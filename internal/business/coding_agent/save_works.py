@@ -17,7 +17,7 @@ class SaveWorks:
             raise Exception(f"coding_agent_workspace {coding_agent_workspace} 不存在")
         
         self.coding_agent_workspace = coding_agent_workspace
-        self.feishu_doc = feishu_doc_data.FeishuDocData()
+        self.feishu_doc = feishu_doc_data.FeishuDocData(filter_and=[{"field_name": self.recipient_key, "operator": "is", "value": [self.recipient_myself]}])
 
     def save_json(self, row_id: str, model_name: str, json_data: dict):
         if not json_data:
@@ -45,6 +45,8 @@ class SaveWorks:
             
         if len(self.feishu_doc.table_records) == 0:
             logging.info("飞书上没有未完成的任务了")
+        else:
+            logging.info(f"飞书上有 {len(self.feishu_doc.table_records)} 条未完成的任务")
         
         for record in self.feishu_doc.table_records:
             record_id = record.get("record_id", "")
@@ -58,14 +60,12 @@ class SaveWorks:
             row_id = row.get(self.feishu_doc.row_id_key, "")
             if not row_id or not row_id.strip():
                 raise Exception(f"飞书文档行 {row_id} 缺少ID")
-            
             model_name = row.get(self.feishu_doc.model_name_key, "")
             if not model_name or not model_name.strip():
                 raise Exception(f"飞书文档行 {row_id} 缺少大模型名称")
-
             # 已完成的数据就忽略了
             if self.feishu_doc.row_is_complete(row):
-                logging.debug(f"已完成, 跳过: {record_id}{row_id}:{model_name}")
+                logging.info(f"已完成, 跳过: {record_id}{row_id}:{model_name}")
                 continue
             
             logging.info(f"检测到未完成的题目, 开始写入工作目录: {row_id}:{model_name}")
@@ -77,6 +77,7 @@ class SaveWorks:
             else:
                 logging.info(f"目录已存在, 跳过: {row_dir}")
                 continue
+            
             # 保存提示词
             self.save_prompt_md(row_id, model_name, row.get(self.feishu_doc.prompt_key, ""))
             # 保存json
