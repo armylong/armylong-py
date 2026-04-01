@@ -1,5 +1,6 @@
 # image_processor.py（增强版本）
 import os
+import logging
 from PIL import Image, ImageEnhance, ImageOps
 import argparse
 
@@ -248,12 +249,11 @@ class ImageBatchProcessor:
                     processed_img.save(save_path)
                 self.stats["success"] += 1
 
-        # 输出统计报告
-        print("===== 处理报告 =====")
-        print(f"总文件数：{self.stats['total']}")
-        print(f"成功数：{self.stats['success']}")
-        print(f"失败数：{len(self.stats['failed'])}")
+        logging.info("===== 处理报告 =====")
+        logging.info(f"总文件数：{self.stats['total']}")
+        logging.info(f"成功数：{self.stats['success']}")
+        logging.info(f"失败数：{len(self.stats['failed'])}")
         if self.stats["failed"]:
-            print("失败详情：")
+            logging.warning("失败详情：")
             for err in self.stats["failed"]:
-                print(f"  - {err}")
+                logging.warning(f"  - {err}")

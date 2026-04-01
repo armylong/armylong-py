@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 import requests
 from datetime import datetime
 from internal.business.coding_agent import feishu_doc_data
@@ -96,7 +97,7 @@ class UpFeishuDoc:
             "record_id": record_id,
             "update_base_tables_url_request_json": {"fields": feishu_up_map}
         }
-        print(params)
+        logging.debug(f"更新飞书文档参数: {params}")
 
         response = requests.post(url, json=params).json()
         if response.get("errorCode", -1) != 0:
@@ -106,18 +107,17 @@ class UpFeishuDoc:
         if doc_response.get("code", -1) != 0:
             raise Exception(doc_response.get("msg", "更新飞书文档失败 飞书接口报错"))
 
-        print(doc_response)
+        logging.info(f"飞书文档更新成功: {doc_response}")
 
     # 将任务结果数据回写至飞书多为表格
     def main(self, record_ids=[]):
         if len(record_ids) > 0:
-            print(f"只回写记录ID为 {record_ids} 的未完成任务")
+            logging.info(f"只回写记录ID为 {record_ids} 的未完成任务")
         else:
-            print("回写所有未完成任务")
+            logging.info("回写所有未完成任务")
 
-        # 循环查找飞书文档中未完成的任务
         if len(self.feishu_doc.table_records) == 0:
-            print("- 飞书上没有未完成的任务了")
+            logging.info("飞书上没有未完成的任务了")
 
         for record in self.feishu_doc.table_records:
             record_id = record.get("record_id", "")
@@ -138,14 +138,14 @@ class UpFeishuDoc:
 
             # 已完成的数据就忽略了
             if self.feishu_doc.row_is_complete(row):
-                print(f"已完成, 跳过: {record_id}:{row_id}:{model_name}")
+                logging.debug(f"已完成, 跳过: {record_id}:{row_id}:{model_name}")
                 continue
             
-            print(f"检测到未完成的题目, 开始将数据写入到飞书多维表格中: {record_id}:{row_id}:{model_name}")
+            logging.info(f"检测到未完成的题目, 开始将数据写入到飞书多维表格中: {record_id}:{row_id}:{model_name}")
             # 查找对应目录判断题目是否已完成
             qa_result = self.instance_is_complete(row_id)
             if not qa_result:
-                print(f"题目 {record_id}:{row_id}:{model_name} 没检测到qa_result.json文件, 跳过")
+                logging.warning(f"题目 {record_id}:{row_id}:{model_name} 没检测到qa_result.json文件, 跳过")
                 continue
 
             # 因为qa_result.json是多个模型的处理结果(一个模型代表一行, 本次就只处理当前模型的数据)

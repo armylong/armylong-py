@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 from internal.business.coding_agent import feishu_doc_data
 
 
@@ -36,13 +37,12 @@ class SaveWorks:
     # 将飞书文档中未完成的任务, 写入到本地目录中(------已经写入过的直接跳过------)
     def main(self, record_ids=[]):
         if len(record_ids) > 0:
-            print(f"只拉取记录ID为 {record_ids} 的未完成任务")
+            logging.info(f"只拉取记录ID为 {record_ids} 的未完成任务")
         else:
-            print("拉取所有未完成任务")
+            logging.info("拉取所有未完成任务")
             
-        # 循环查找飞书文档中未完成的任务
         if len(self.feishu_doc.table_records) == 0:
-            print("- 飞书上没有未完成的任务了")
+            logging.info("飞书上没有未完成的任务了")
         
         for record in self.feishu_doc.table_records:
             record_id = record.get("record_id", "")
@@ -63,16 +63,16 @@ class SaveWorks:
 
             # 已完成的数据就忽略了
             if self.feishu_doc.row_is_complete(row):
-                print(f"已完成, 跳过: {record_id}{row_id}:{model_name}")
+                logging.debug(f"已完成, 跳过: {record_id}{row_id}:{model_name}")
                 continue
             
-            print(f"检测到未完成的题目, 开始写入工作目录: {row_id}:{model_name}")
+            logging.info(f"检测到未完成的题目, 开始写入工作目录: {row_id}:{model_name}")
             # 创建id工作目录(如果存在, 则跳过不重复建)
             row_dir = f"{self.coding_agent_workspace}/{row_id}"
             if not os.path.exists(row_dir):
                 os.makedirs(row_dir)
             else:
-                print(f"- 目录 {row_dir} 已存在, 跳过")
+                logging.debug(f"目录 {row_dir} 已存在, 跳过")
                 continue
             # 保存提示词
             self.save_prompt_md(row_id, model_name, row.get(self.feishu_doc.prompt_key, ""))

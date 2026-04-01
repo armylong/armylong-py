@@ -1,4 +1,5 @@
 import os
+import logging
 from internal.business.coding_agent import save_works
 from internal.business.coding_agent import up_feishu_doc
 
@@ -27,23 +28,17 @@ class Main:
         up_feishu_doc.UpFeishuDoc(self.coding_agent_workspace).main(record_ids=record_ids)
     
     def main(self, record_ids=[]):
-        
-        # 写入工作目录任务数据
-        print("从飞书拉取未完成任务数据, 并写入到本地")
+        logging.info("从飞书拉取未完成任务数据, 并写入到本地")
         self.save_works(record_ids)
 
-        # 调用ai完成任务
-        print("\n调用ai完成任务, 生成qa_result.json")
+        logging.info("调用ai完成任务, 生成qa_result.json")
         self.call_ai()
 
-        # 将任务结果数据回写至飞书多为表格
-        print("\n将ai处理完的本地数据结果(qa_result.json), 回写至飞书多维表格")
-        self.update_feishu_doc()  # 实时监控qa_result.done文件, 同时结合云端是否完成标记, 只处理未完成的题目
-        
-
-        ## 可以加个只拉取未完成的题目的筛选项
+        logging.info("将ai处理完的本地数据结果(qa_result.json), 回写至飞书多维表格")
+        self.update_feishu_doc()
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
     main = Main()
-    print(main.coding_agent_workspace)
+    logging.info(f"工作目录: {main.coding_agent_workspace}")
     main.main()

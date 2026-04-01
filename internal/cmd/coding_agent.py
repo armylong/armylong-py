@@ -2,9 +2,8 @@ import click
 import logging
 from internal.business.coding_agent.main import Main
 
-
 @click.command(name='coding_agent')
-@click.argument('action')  # 必选参数：任务类型（get/create/sort等）
+@click.argument('action')
 @click.option('--record_ids', type=str, default='', help='记录ID列表（可选，逗号分隔）')
 def coding_agent_handler(action, record_ids):   
     """coding_agent命令核心逻辑：仅读取参数 + 处理业务"""
