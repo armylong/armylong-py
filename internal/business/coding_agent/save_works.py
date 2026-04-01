@@ -1,21 +1,21 @@
 import os
 import json
-import feishu_doc_data
+from internal.business.coding_agent import feishu_doc_data
 
 
 class SaveWorks:
     
-    works_dir = ""
+    coding_agent_workspace = ""
     feishu_doc = None
 
-    def __init__(self, works_dir: str):
-        if not works_dir or not works_dir.strip():
-            raise Exception("works_dir 不能为空")
+    def __init__(self, coding_agent_workspace: str):
+        if not coding_agent_workspace or not coding_agent_workspace.strip():
+            raise Exception("coding_agent_workspace 不能为空")
 
-        if not os.path.exists(works_dir):
-            raise Exception(f"works_dir {works_dir} 不存在")
+        if not os.path.exists(coding_agent_workspace):
+            raise Exception(f"coding_agent_workspace {coding_agent_workspace} 不存在")
         
-        self.works_dir = works_dir
+        self.coding_agent_workspace = coding_agent_workspace
         self.feishu_doc = feishu_doc_data.FeishuDocData()
 
     def save_json(self, row_id: str, model_name: str, json_data: dict):
@@ -24,17 +24,22 @@ class SaveWorks:
         json_str = json.dumps(json_data, ensure_ascii=False, indent=4)
         if not json_str or not json_str.strip():
             raise Exception(f"飞书文档行 {row_id} json数据异常 为空")
-        with open(f"{self.works_dir}/{row_id}/{model_name}.json", "w", encoding="utf-8") as f:
+        with open(f"{self.coding_agent_workspace}/{row_id}/{model_name}.json", "w", encoding="utf-8") as f:
             f.write(json_str)
 
     def save_prompt_md(self, row_id: str, model_name: str, prompt_str: str):
         if not prompt_str or not prompt_str.strip():
             raise Exception(f"飞书文档行 {row_id} 提示词数据异常 为空")
-        with open(f"{self.works_dir}/{row_id}/prompt.md", "w", encoding="utf-8") as f:
+        with open(f"{self.coding_agent_workspace}/{row_id}/prompt.md", "w", encoding="utf-8") as f:
             f.write(prompt_str)
         
     # 将飞书文档中未完成的任务, 写入到本地目录中(------已经写入过的直接跳过------)
     def main(self, record_ids=[]):
+        if len(record_ids) > 0:
+            print(f"只拉取记录ID为 {record_ids} 的未完成任务")
+        else:
+            print("拉取所有未完成任务")
+            
         # 循环查找飞书文档中未完成的任务
         if len(self.feishu_doc.table_records) == 0:
             print("- 飞书上没有未完成的任务了")
@@ -63,7 +68,7 @@ class SaveWorks:
             
             print(f"检测到未完成的题目, 开始写入工作目录: {row_id}:{model_name}")
             # 创建id工作目录(如果存在, 则跳过不重复建)
-            row_dir = f"{self.works_dir}/{row_id}"
+            row_dir = f"{self.coding_agent_workspace}/{row_id}"
             if not os.path.exists(row_dir):
                 os.makedirs(row_dir)
             else:

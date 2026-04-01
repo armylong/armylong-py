@@ -2,26 +2,26 @@ import os
 import json
 import requests
 from datetime import datetime
-import feishu_doc_data
+from internal.business.coding_agent import feishu_doc_data
 
 class UpFeishuDoc:
 
-    works_dir = ""
+    coding_agent_workspace = ""
     feishu_doc = None
 
-    def __init__(self, works_dir: str):
-        if not works_dir or not works_dir.strip():
-            raise Exception("works_dir 不能为空")
+    def __init__(self, coding_agent_workspace: str):
+        if not coding_agent_workspace or not coding_agent_workspace.strip():
+            raise Exception("coding_agent_workspace 不能为空")
 
-        if not os.path.exists(works_dir):
-            raise Exception(f"works_dir {works_dir} 不存在")
+        if not os.path.exists(coding_agent_workspace):
+            raise Exception(f"coding_agent_workspace {coding_agent_workspace} 不存在")
         
-        self.works_dir = works_dir
+        self.coding_agent_workspace = coding_agent_workspace
         self.feishu_doc = feishu_doc_data.FeishuDocData()
 
     def instance_is_complete(self, instance_id: str)->dict:
         """是否是已完成的题目数据"""
-        instance_dir = os.path.join(self.works_dir, instance_id)
+        instance_dir = os.path.join(self.coding_agent_workspace, instance_id)
         if not os.path.exists(instance_dir):
             raise Exception(f"题目目录 {instance_dir} 不存在")
         
@@ -110,6 +110,11 @@ class UpFeishuDoc:
 
     # 将任务结果数据回写至飞书多为表格
     def main(self, record_ids=[]):
+        if len(record_ids) > 0:
+            print(f"只回写记录ID为 {record_ids} 的未完成任务")
+        else:
+            print("回写所有未完成任务")
+
         # 循环查找飞书文档中未完成的任务
         if len(self.feishu_doc.table_records) == 0:
             print("- 飞书上没有未完成的任务了")
